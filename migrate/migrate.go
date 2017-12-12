@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"github.com/jackc/pgx"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
-	"os"
 )
 
 var migrationPattern = regexp.MustCompile(`\A(\d+)_.+\.sql\z`)
@@ -83,7 +83,7 @@ type MigratorFS interface {
 	Glob(pattern string) (matches []string, err error)
 }
 
-type defaultMigratorFS struct {}
+type defaultMigratorFS struct{}
 
 func (defaultMigratorFS) ReadDir(dirname string) ([]os.FileInfo, error) {
 	return ioutil.ReadDir(dirname)
@@ -177,7 +177,13 @@ func (m *Migrator) LoadMigrations(path string) error {
 			return err
 		}
 
-		pieces := strings.SplitN(string(body), "---- create above / drop below ----", 2)
+		sbody := string(body)
+		if sbody[0:7] == "-- notx" {
+			fmt.Println("disabling transactions for these migrations")
+			m.options.DisableTx = true
+		}
+
+		pieces := strings.SplitN(sbody, "---- create above / drop below ----", 2)
 		var upSQL, downSQL string
 		upSQL = strings.TrimSpace(pieces[0])
 		upSQL, err = m.evalMigration(mainTmpl.New(filepath.Base(p)+" up"), upSQL)
