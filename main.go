@@ -13,7 +13,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/Sproutling/tern/migrate"
+	"github.com/Mattel/tern/migrate"
 	"github.com/jackc/pgx"
 	"github.com/spf13/cobra"
 	"github.com/vaughan0/go-ini"
